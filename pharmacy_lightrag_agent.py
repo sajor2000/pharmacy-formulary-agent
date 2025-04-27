@@ -13,13 +13,6 @@ from pinecone import Pinecone
 import numpy as np
 from sklearn.decomposition import PCA
 
-# Add LightRAG to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'LightRAG'))
-
-# Import LightRAG components
-from lightrag.llm.openai import gpt_4o_complete
-from lightrag.llm.openai import openai_embed
-
 # Load environment variables
 load_dotenv()
 
