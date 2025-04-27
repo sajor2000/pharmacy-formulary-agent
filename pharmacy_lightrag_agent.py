@@ -103,7 +103,7 @@ class PharmacyFormularyAgent:
             4. Present recommendations in order of preference
             
             # QUESTION FROM HEALTHCARE PROVIDER
-            {query}
+            {question}
             
             # RESPONSE FORMAT
             Present your recommendations in this format:
@@ -214,11 +214,12 @@ Verification Note:
 [Clearly state whether this answer is from the uploaded documents or external knowledge. If information is incomplete, acknowledge this.]"""
             
             try:
+                # Use a more effective prompt structure
                 response = self.openai_client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
-                        {"role": "system", "content": formatted_prompt},
-                        {"role": "user", "content": question}
+                        {"role": "system", "content": "You are a pharmacy inhaler formulary specialist who matches respiratory medications to insurance formulary preferences."},
+                        {"role": "user", "content": formatted_prompt}
                     ],
                     temperature=0.2,
                     max_tokens=1000
@@ -281,7 +282,7 @@ Verification Note:
             logger.error(f"Error resizing embedding: {e}")
             return None
     
-    def search_pinecone(self, query_embedding, top_k=5):
+    def search_pinecone(self, query_embedding, top_k=10):
         """Search Pinecone for relevant documents"""
         try:
             results = self.index.query(

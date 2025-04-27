@@ -1,0 +1,100 @@
+{
+  "overall": {
+    "total_score": 16,
+    "total_max": 16,
+    "overall_percentage": 100.0
+  },
+  "query_results": [
+    {
+      "query_info": {
+        "name": "Basic Tier Query",
+        "query": "What tier is Advair in BCBS insurance?",
+        "expected_elements": [
+          "tier",
+          "Advair",
+          "BCBS"
+        ]
+      },
+      "response": "I'm unable to find specific information about the tier placement of Advair in BCBS insurance from the provided documents. To provide accurate information, I would need to consult an official and current source, such as the BCBS formulary or their customer service.\n\nHowever, I can guide you on how to proceed:\n\n1. **Check BCBS Formulary**: Visit the official BCBS website or contact their customer service to access the most current formulary information. This will provide details on the tier placement of Advair and any associated requirements.\n\n2. **Consider Alternatives**: If Advair is not favorably covered, consider alternative medications within the same class, such as Wixela Inhub or AirDuo RespiClick, which might have different coverage terms.\n\n3. **Verify Requirements**: Confirm if there are any prior authorization or step therapy requirements for Advair or its alternatives.\n\n4. **Estimate Costs**: Once you have the tier information, you can estimate the copay based on the tier and the patient's specific plan details.\n\nIf you have access to BCBS resources or can contact them directly, that would be the best way to obtain the most accurate and up-to-date information.",
+      "evaluation": {
+        "score": 3,
+        "max_score": 3,
+        "percentage": 100.0,
+        "contains_all_elements": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Prior Authorization Query",
+        "query": "Does Trelegy require prior authorization for Cigna?",
+        "expected_elements": [
+          "prior authorization",
+          "Trelegy",
+          "Cigna"
+        ]
+      },
+      "response": "Based on the provided documents, there is no specific mention of Trelegy Ellipta in the Cigna formulary documents. Therefore, I will provide a general recommendation based on typical coverage patterns for Cigna, but please verify with the most current and official Cigna formulary or contact Cigna directly for confirmation.\n\n### Primary Recommendation:\n**Medication:** Trelegy Ellipta  \n- **Form:** Brand  \n- **Device type:** DPI (Dry Powder Inhaler)  \n- **Strength:** 100/62.5/25 mcg, 200/62.5/25 mcg  \n- **Tier:** Typically Tier 3 or 4 (subject to confirmation)  \n- **Requirements:** Likely requires Prior Authorization (PA)  \n- **Quantity limit:** Typically 1 inhaler per 30 days  \n- **Estimated copay:** Varies based on tier and insurance plan specifics  \n\n### Alternative Options:\n1. **First Alternative:**\n   - **Name:** Breztri Aerosphere\n   - **Key difference:** Different combination of active ingredients (budesonide/glycopyrrolate/formoterol)\n   - **Requirements:** May also require PA; check specific formulary details\n\n2. **Second Alternative:**\n   - **Name:** Anoro Ellipta\n   - **Key difference:** LAMA-LABA combination without ICS\n   - **Requirements:** Typically fewer restrictions, but confirm with formulary\n\n### Coverage Notes:\n- **Prior authorization criteria:** Typically involves confirmation of diagnosis and previous treatment history.\n- **Step therapy requirements:** May require trial and failure of other medications before approval.\n- **Preferred pharmacy requirements:** Use of in-network pharmacies may be necessary.\n- **Quantity restrictions:** Commonly limited to one inhaler per month.\n- **Special instructions:** Always verify with the latest formulary or contact Cigna for the most accurate information.\n\nPlease ensure to check the most current Cigna formulary or contact Cigna directly for the most accurate and up-to-date information regarding Trelegy Ellipta's coverage and requirements.",
+      "evaluation": {
+        "score": 3,
+        "max_score": 3,
+        "percentage": 100.0,
+        "contains_all_elements": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Alternative Medication Query",
+        "query": "What are lower cost alternatives to Symbicort for asthma?",
+        "expected_elements": [
+          "alternative",
+          "Symbicort",
+          "cost",
+          "asthma"
+        ]
+      },
+      "response": "To provide lower-cost alternatives to Symbicort for asthma, I will review the available options based on the provided formulary documents and general coverage patterns.\n\n### Primary Recommendation:\n**Medication:** Advair Diskus  \n- **Form:** Brand  \n- **Device type:** DPI (Dry Powder Inhaler)  \n- **Strength:** 100/50 mcg, 250/50 mcg, 500/50 mcg  \n- **Tier:** 1 (BCBS)  \n- **Requirements:** None  \n- **Quantity limit:** 60 blisters/30 days  \n- **Estimated copay:** Not specified in documents, but typically lower due to tier 1 status  \n\n### Alternative Options:\n1. **First Alternative:**\n   - **Name:** Wixela Inhub (generic for Advair Diskus)\n   - **Key difference:** Lower cost due to generic status\n   - **Requirements:** None\n\n2. **Second Alternative:**\n   - **Name:** Breo Ellipta\n   - **Key difference:** Different ICS-LABA combination (fluticasone/vilanterol)\n   - **Requirements:** None\n   - **Tier:** 2 (BCBS)\n   - **Quantity limit:** 60 blisters/30 days\n\n### Coverage Notes:\n- **Prior authorization criteria:** Not required for primary recommendation or alternatives.\n- **Step therapy requirements:** None indicated for the listed alternatives.\n- **Preferred pharmacy requirements:** Not specified in documents.\n- **Quantity restrictions:** As noted above for each medication.\n- **Special instructions:** Ensure patient education on device use, especially when switching between MDI and DPI devices.\n\nThese recommendations are based on the BCBS formulary document provided. If the patient's insurance is different, please verify with the specific insurance plan's formulary for accurate coverage details.",
+      "evaluation": {
+        "score": 4,
+        "max_score": 4,
+        "percentage": 100.0,
+        "contains_all_elements": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Medication Class Query",
+        "query": "What ICS-LABA combinations are covered by Aetna?",
+        "expected_elements": [
+          "ICS-LABA",
+          "Aetna",
+          "covered"
+        ]
+      },
+      "response": "I'm unable to provide specific information about Aetna's coverage for ICS-LABA combinations from the documents provided, as they do not contain details about Aetna's formulary. To accurately determine which ICS-LABA combinations are covered by Aetna, I recommend checking Aetna's official formulary or contacting their customer service directly.\n\nHowever, I can provide a general overview of common ICS-LABA combinations that are typically covered by many insurance plans, which might be useful when checking Aetna's formulary:\n\n### Common ICS-LABA Combinations\n\n1. **Advair Diskus (Fluticasone/Salmeterol)**\n   - Form: Brand\n   - Device type: DPI\n   - Strength: 100/50, 250/50, 500/50 mcg\n   - Tier: Varies by plan\n   - Requirements: Often requires prior authorization\n   - Quantity limit: Typically 60 blisters/30 days\n\n2. **Symbicort (Budesonide/Formoterol)**\n   - Form: Brand\n   - Device type: MDI\n   - Strength: 80/4.5, 160/4.5 mcg\n   - Tier: Varies by plan\n   - Requirements: May require prior authorization\n   - Quantity limit: Typically 2 inhalers/30 days\n\n3. **Breo Ellipta (Fluticasone/Vilanterol)**\n   - Form: Brand\n   - Device type: DPI\n   - Strength: 100/25, 200/25 mcg\n   - Tier: Varies by plan\n   - Requirements: Often requires prior authorization\n   - Quantity limit: Typically 1 inhaler/30 days\n\n### Steps to Verify Coverage with Aetna\n1. **Check Aetna's Formulary:** Visit Aetna's official website or use their member portal to access the most current formulary.\n2. **Contact Customer Service:** Call the number on the back of the member ID card for specific coverage details.\n3. **Consult with a Pharmacist:** A pharmacist can often provide insights into common coverage patterns for Aetna.\n\n### Coverage Notes\n- **Prior Authorization:** Many ICS-LABA combinations require prior authorization to ensure appropriate use.\n- **Step Therapy:** Some plans may require trying a less expensive medication first.\n- **Quantity Restrictions:** Typically, there are limits on the number of inhalers or doses per month.\n- **Preferred Pharmacy:** Using a preferred pharmacy can sometimes reduce costs.\n\nFor the most accurate and up-to-date information, please refer to Aetna's official resources or contact them directly.",
+      "evaluation": {
+        "score": 3,
+        "max_score": 3,
+        "percentage": 100.0,
+        "contains_all_elements": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Quantity Limit Query",
+        "query": "What is the quantity limit for Ventolin HFA on UnitedHealthcare?",
+        "expected_elements": [
+          "quantity limit",
+          "Ventolin",
+          "UnitedHealthcare"
+        ]
+      },
+      "response": "To determine the quantity limit for Ventolin HFA on UnitedHealthcare, I will first check the provided documents for any specific information regarding UnitedHealthcare's formulary. However, the documents provided do not include information specific to UnitedHealthcare. Therefore, I will need to refer to an external and official source for the most accurate and current information.\n\n**Primary Recommendation:**\n- **Medication:** Ventolin HFA\n  - **Form:** Brand\n  - **Device type:** MDI (Metered Dose Inhaler)\n  - **Strength:** 90 mcg\n  - **Tier:** Typically Tier 2 or 3 (subject to specific plan details)\n  - **Requirements:** None or PA (Prior Authorization) depending on the plan\n  - **Quantity limit:** Commonly 2 inhalers per 30 days (subject to specific plan details)\n  - **Estimated copay:** Varies by plan and tier\n\n**Alternative Options:**\n1. **First Alternative:**\n   - **Name:** ProAir HFA\n   - **Key difference:** May have different tier placement or cost\n   - **Requirements:** Similar PA requirements\n\n2. **Second Alternative:**\n   - **Name:** Proventil HFA\n   - **Key difference:** Device preference or formulary placement\n   - **Requirements:** Similar PA requirements\n\n**Coverage Notes:**\n- **Prior authorization criteria:** May apply based on specific plan details\n- **Step therapy requirements:** Typically not required for rescue inhalers\n- **Preferred pharmacy requirements:** Check specific plan for preferred pharmacy networks\n- **Quantity restrictions:** Typically 2 inhalers per 30 days, but confirm with specific plan\n- **Special instructions:** Always verify with the specific UnitedHealthcare plan for the most accurate information\n\nThis information is based on typical coverage patterns and may vary by specific UnitedHealthcare plan. For the most accurate and up-to-date information, it is recommended to consult the specific plan's formulary or contact UnitedHealthcare directly.",
+      "evaluation": {
+        "score": 3,
+        "max_score": 3,
+        "percentage": 100.0,
+        "contains_all_elements": true
+      }
+    }
+  ]
+}

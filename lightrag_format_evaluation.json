@@ -1,0 +1,77 @@
+{
+  "overall": {
+    "overall_format_score": 100.0,
+    "all_follow_format": true
+  },
+  "query_results": [
+    {
+      "query_info": {
+        "name": "Comprehensive Tier Query",
+        "query": "What tier is Advair in BCBS insurance and what are the alternatives?",
+        "expected_format_elements": [
+          "Primary Recommendation",
+          "Alternative Options",
+          "Coverage Notes"
+        ]
+      },
+      "response": "Primary Recommendation:\nMedication: Advair\n- Form: Brand\n- Device type: DPI (Diskus) / MDI (HFA)\n- Strength: Unknown\n- Tier: Unknown\n- Requirements: Unknown\n- Quantity limit: Unknown\n- Estimated copay: Unknown\n\nAlternative Options:\n1. First Alternative:\n   - Name: No alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\n2. Second Alternative:\n   - Name: No additional alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\nCoverage Notes:\nLimited coverage information available from the provided documents.\n\nVerification Note:\nThis answer is based on external knowledge as the specific BCBS formulary information was not available in the provided documents.",
+      "format_evaluation": {
+        "present_elements": [
+          "Primary Recommendation",
+          "Alternative Options",
+          "Coverage Notes",
+          "Verification Note"
+        ],
+        "missing_elements": [],
+        "format_score": 100.0,
+        "follows_format": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Medication Comparison Query",
+        "query": "Compare Symbicort and Advair for asthma treatment coverage on Cigna",
+        "expected_format_elements": [
+          "Primary Recommendation",
+          "Alternative Options",
+          "Coverage Notes"
+        ]
+      },
+      "response": "Primary Recommendation:\nMedication: No specific recommendation due to limited information\n- Form: Unknown\n- Device type: Unknown\n- Strength: Unknown\n- Tier: Unknown\n- Requirements: Unknown\n- Quantity limit: Unknown\n- Estimated copay: Unknown\n\nAlternative Options:\n1. First Alternative:\n   - Name: No alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\n2. Second Alternative:\n   - Name: No additional alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\nCoverage Notes:\nLimited coverage information available from the provided documents.\n\nVerification Note:\nThis answer is based on the uploaded documents. The documents provided do not contain specific information regarding Symbicort or Advair coverage on Cigna. Further details may be available in other sections of the formulary not included in the provided excerpts.",
+      "format_evaluation": {
+        "present_elements": [
+          "Primary Recommendation",
+          "Alternative Options",
+          "Coverage Notes",
+          "Verification Note"
+        ],
+        "missing_elements": [],
+        "format_score": 100.0,
+        "follows_format": true
+      }
+    },
+    {
+      "query_info": {
+        "name": "Prior Authorization Requirements",
+        "query": "What are the prior authorization requirements for Trelegy on Aetna?",
+        "expected_format_elements": [
+          "Requirements",
+          "Prior authorization",
+          "Coverage Notes"
+        ]
+      },
+      "response": "Primary Recommendation:\nMedication: No specific recommendation due to limited information\n- Form: Unknown\n- Device type: Unknown\n- Strength: Unknown\n- Tier: Unknown\n- Requirements: Unknown\n- Quantity limit: Unknown\n- Estimated copay: Unknown\n\nAlternative Options:\n1. First Alternative:\n   - Name: No alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\n2. Second Alternative:\n   - Name: No additional alternatives identified\n   - Key difference: Unknown\n   - Requirements: Unknown\n\nCoverage Notes:\nLimited coverage information available from the provided documents.\n\nVerification Note:\nThis answer is based on the uploaded documents. No specific information about Trelegy or its prior authorization requirements on Aetna was available in the provided documents.",
+      "format_evaluation": {
+        "present_elements": [
+          "Primary Recommendation",
+          "Alternative Options",
+          "Coverage Notes",
+          "Verification Note"
+        ],
+        "missing_elements": [],
+        "format_score": 100.0,
+        "follows_format": true
+      }
+    }
+  ]
+}
