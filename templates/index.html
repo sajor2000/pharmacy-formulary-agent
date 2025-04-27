@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Formulary Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --chatgpt-dark: #202123;
+            --chatgpt-sidebar: #202123;
+            --chatgpt-light-bg: #343541;
+            --chatgpt-user-bubble: #343541;
+            --chatgpt-assistant-bubble: #444654;
+            --chatgpt-text: #ECECF1;
+            --chatgpt-input-bg: #40414F;
+            --chatgpt-input-border: #565869;
+            --chatgpt-accent: #10A37F;
+            --chatgpt-accent-hover: #1A7F64;
+        }
+        
+        body {
+            font-family: 'Söhne', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--chatgpt-light-bg);
+            color: var(--chatgpt-text);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            background-color: var(--chatgpt-sidebar);
+            width: 260px;
+            height: 100vh;
+            padding: 10px;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .new-chat-btn {
+            background-color: var(--chatgpt-accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            transition: background-color 0.2s;
+        }
+        
+        .new-chat-btn:hover {
+            background-color: var(--chatgpt-accent-hover);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-title {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+        
+        /* Main chat area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px;
+            scroll-behavior: smooth;
+        }
+        
+        .message-row {
+            display: flex;
+            padding: 20px 15%;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .user-row {
+            background-color: var(--chatgpt-user-bubble);
+        }
+        
+        .assistant-row {
+            background-color: var(--chatgpt-assistant-bubble);
+        }
+        
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar {
+            background-color: #5436DA;
+        }
+        
+        .assistant-avatar {
+            background-color: var(--chatgpt-accent);
+        }
+        
+        .message-content {
+            flex: 1;
+            line-height: 1.5;
+        }
+        
+        /* Input area */
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            right: 0;
+            padding: 20px 15%;
+            background: linear-gradient(to bottom, transparent, var(--chatgpt-light-bg) 20%);
+        }
+        
+        .input-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .message-input {
+            width: 100%;
+            background-color: var(--chatgpt-input-bg);
+            border: 1px solid var(--chatgpt-input-border);
+            border-radius: 6px;
+            padding: 12px 45px 12px 15px;
+            color: var(--chatgpt-text);
+            font-size: 1rem;
+            resize: none;
+            min-height: 52px;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: var(--chatgpt-accent);
+            box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.3);
+        }
+        
+        .send-button {
+            position: absolute;
+            right: 10px;
+            bottom: 12px;
+            background: transparent;
+            border: none;
+            color: var(--chatgpt-text);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .send-button:hover {
+            opacity: 1;
+        }
+        
+        /* Sidebar items */
+        .insurance-badge, .medication-badge, .medication-class-badge {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            margin-right: 5px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: inline-block;
+            cursor: pointer;
+            background-color: transparent;
+            color: var(--chatgpt-text);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: background-color 0.2s;
+        }
+        
+        .insurance-badge:hover, .medication-badge:hover, .medication-class-badge:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .insurance-badge.selected {
+            background-color: var(--chatgpt-accent);
+            border-color: var(--chatgpt-accent);
+        }
+        
+        .medication-class-badge {
+            font-weight: bold;
+            border-width: 2px;
+        }
+        
+        .medication-class-badge.selected {
+            background-color: #8e44ad; /* Purple for medication classes */
+            border-color: #8e44ad;
+        }
+        
+        /* Medication class colors */
+        .medication-class-badge[data-class="SABA"], .medication-badge[data-class="SABA"] {
+            border-color: #3498db; /* Blue */
+        }
+        
+        .medication-class-badge[data-class="ICS"], .medication-badge[data-class="ICS"] {
+            border-color: #2ecc71; /* Green */
+        }
+        
+        .medication-class-badge[data-class="ICS-LABA"], .medication-badge[data-class="ICS-LABA"] {
+            border-color: #f1c40f; /* Yellow */
+        }
+        
+        .medication-class-badge[data-class="LAMA"], .medication-badge[data-class="LAMA"] {
+            border-color: #e74c3c; /* Red */
+        }
+        
+        .medication-class-badge[data-class="LAMA-LABA"], .medication-badge[data-class="LAMA-LABA"] {
+            border-color: #e67e22; /* Orange */
+        }
+        
+        .medication-class-badge[data-class="ICS-LABA-LAMA"], .medication-badge[data-class="ICS-LABA-LAMA"] {
+            border-color: #9b59b6; /* Purple */
+        }
+        
+        /* Tier indicators */
+        .tier-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        
+        .tier-1 { background-color: #28a745; }
+        .tier-2 { background-color: #17a2b8; }
+        .tier-3 { background-color: #ffc107; }
+        .tier-4 { background-color: #fd7e14; }
+        .tier-5 { background-color: #dc3545; }
+        
+        /* Loading animation */
+        .loading-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .loading-dots span {
+            width: 4px;
+            height: 4px;
+            margin: 0 2px;
+            background-color: var(--chatgpt-text);
+            border-radius: 50%;
+            animation: loadingDots 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dots span:nth-child(1) { animation-delay: 0s; }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes loadingDots {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                width: 260px;
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .input-area {
+                left: 0;
+                padding: 20px 5%;
+            }
+            
+            .message-row {
+                padding: 20px 5%;
+            }
+            
+            .menu-toggle {
+                display: block;
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                z-index: 101;
+                background-color: var(--chatgpt-accent);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile menu toggle button -->
+    <button class="menu-toggle d-md-none" id="menuToggle">
+        <i class="bi bi-list"></i>
+    </button>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn">
+                <i class="bi bi-plus-lg me-2"></i> New chat
+            </button>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Insurance Providers</div>
+            <div class="insurance-providers">
+                <div class="insurance-badge" data-provider="Blue Cross Blue Shield">BCBS</div>
+                <div class="insurance-badge" data-provider="UnitedHealthcare">UHC</div>
+                <div class="insurance-badge" data-provider="Cigna">Cigna</div>
+                <div class="insurance-badge" data-provider="Humana">Humana</div>
+                <div class="insurance-badge" data-provider="Express Scripts">Express Scripts</div>
+                <div class="insurance-badge" data-provider="Meridian">Meridian</div>
+                <div class="insurance-badge" data-provider="Wellcare">Wellcare</div>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Medication Classes</div>
+            <div class="medication-classes">
+                <div class="medication-class-badge" data-class="SABA">SABA (Rescue)</div>
+                <div class="medication-class-badge" data-class="ICS">ICS</div>
+                <div class="medication-class-badge" data-class="ICS-LABA">ICS-LABA</div>
+                <div class="medication-class-badge" data-class="LAMA">LAMA</div>
+                <div class="medication-class-badge" data-class="LAMA-LABA">LAMA-LABA</div>
+                <div class="medication-class-badge" data-class="ICS-LABA-LAMA">Triple Therapy</div>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Common Medications</div>
+            <div class="common-medications">
+                <div class="medication-badge" data-class="SABA">Albuterol</div>
+                <div class="medication-badge" data-class="ICS-LABA">Advair</div>
+                <div class="medication-badge" data-class="ICS-LABA">Symbicort</div>
+                <div class="medication-badge" data-class="LAMA">Spiriva</div>
+                <div class="medication-badge" data-class="ICS-LABA">Breo Ellipta</div>
+                <div class="medication-badge" data-class="ICS">Flovent</div>
+                <div class="medication-badge" data-class="SABA">ProAir</div>
+                <div class="medication-badge" data-class="SABA">Ventolin</div>
+                <div class="medication-badge" data-class="ICS-LABA-LAMA">Trelegy</div>
+                <div class="medication-badge" data-class="ICS">Qvar</div>
+                <div class="medication-badge" data-class="ICS-LABA-LAMA">Breztri</div>
+                <div class="medication-badge" data-class="LAMA-LABA">Anoro</div>
+                <div class="medication-badge" data-class="LAMA-LABA">Stiolto</div>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Tier Legend</div>
+            <div class="px-2">
+                <div><span class="tier-indicator tier-1"></span> Tier 1: Preferred Generic</div>
+                <div><span class="tier-indicator tier-2"></span> Tier 2: Non-Preferred Generic</div>
+                <div><span class="tier-indicator tier-3"></span> Tier 3: Preferred Brand</div>
+                <div><span class="tier-indicator tier-4"></span> Tier 4: Non-Preferred Brand</div>
+                <div><span class="tier-indicator tier-5"></span> Tier 5: Specialty</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Chat container -->
+        <div class="chat-container" id="chatContainer">
+            <!-- Welcome message -->
+            <div class="message-row assistant-row">
+                <div class="avatar assistant-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="message-content">
+                    <p>Hello! I'm your pharmacy formulary assistant. I can help you find information about medication coverage, tiers, prior authorization requirements, and lower-tier alternatives.</p>
+                    <p>How can I help you today?</p>
+                </div>
+            </div>
+            <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <!-- Input area -->
+        <div class="input-area">
+            <div class="input-container">
+                <form id="queryForm">
+                    <textarea id="questionInput" class="message-input" placeholder="Ask about medication coverage, tiers, or alternatives..." rows="1"></textarea>
+                    <button type="submit" class="send-button" id="sendButton">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chatContainer');
+            const queryForm = document.getElementById('queryForm');
+            const questionInput = document.getElementById('questionInput');
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const newChatBtn = document.querySelector('.new-chat-btn');
+            let selectedInsurance = null;
+
+            // Auto-resize textarea as user types
+            questionInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if (this.scrollHeight > 200) {
+                    this.style.overflowY = 'auto';
+                } else {
+                    this.style.overflowY = 'hidden';
+                }
+            });
+
+            // Toggle sidebar on mobile
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+
+            // New chat button
+            if (newChatBtn) {
+                newChatBtn.addEventListener('click', function() {
+                    // Clear chat history except for the welcome message
+                    while (chatContainer.children.length > 1) {
+                        chatContainer.removeChild(chatContainer.lastChild);
+                    }
+                    
+                    // Reset selected insurance
+                    selectedInsurance = null;
+                    document.querySelectorAll('.insurance-badge.selected').forEach(badge => {
+                        badge.classList.remove('selected');
+                    });
+                    
+                    // Clear input
+                    questionInput.value = '';
+                    questionInput.style.height = 'auto';
+                    
+                    // Hide sidebar on mobile
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.remove('show');
+                    }
+                });
+            }
+
+            let selectedMedicationClass = null;
+
+            // Handle form submission
+            queryForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitQuery();
+            });
+            
+            // Add click handler for send button
+            document.getElementById('sendButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                submitQuery();
+            });
+            
+            // Function to submit the query
+            function submitQuery() {
+                const question = questionInput.value.trim();
+                if (!question) return;
+
+                // Add user message to chat
+                addUserMessage(question);
+                
+                // Clear input and reset height
+                questionInput.value = '';
+                questionInput.style.height = 'auto';
+                
+                // Add loading indicator
+                const loadingRow = document.createElement('div');
+                loadingRow.className = 'message-row assistant-row';
+                loadingRow.innerHTML = `
+                    <div class="avatar assistant-avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="loading-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(loadingRow);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // Prepare query data with structured information
+                let queryData = { 
+                    question: question,
+                    insurance: selectedInsurance,
+                    medication_class: selectedMedicationClass
+                };
+                
+                // Send query to backend
+                fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(queryData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove loading indicator
+                    chatContainer.removeChild(loadingRow);
+                    
+                    // Add response to chat
+                    if (data.error) {
+                        addAssistantMessage(`Error: ${data.error}`);
+                    } else {
+                        addAssistantMessage(data.response);
+                    }
+                })
+                .catch(error => {
+                    // Remove loading indicator
+                    chatContainer.removeChild(loadingRow);
+                    
+                    // Add error message to chat
+                    addAssistantMessage(`Sorry, there was an error processing your request: ${error}`);
+                });
+            }
+            
+            // Handle insurance provider selection
+            const insuranceBadges = document.querySelectorAll('.insurance-badge');
+            insuranceBadges.forEach(badge => {
+                badge.addEventListener('click', function() {
+                    // Toggle selection
+                    if (this.classList.contains('selected')) {
+                        // Deselect
+                        this.classList.remove('selected');
+                        selectedInsurance = null;
+                    } else {
+                        // Reset all badges
+                        insuranceBadges.forEach(b => {
+                            b.classList.remove('selected');
+                        });
+                        
+                        // Select new badge
+                        this.classList.add('selected');
+                        selectedInsurance = this.dataset.provider;
+                        
+                        // Add system message to chat
+                        addSystemMessage(`Filtering queries for ${selectedInsurance} insurance.`);
+                    }
+                });
+            });
+            
+            // Handle medication class selection
+            const medicationClassBadges = document.querySelectorAll('.medication-class-badge');
+            medicationClassBadges.forEach(badge => {
+                badge.addEventListener('click', function() {
+                    // Toggle selection
+                    if (this.classList.contains('selected')) {
+                        // Deselect
+                        this.classList.remove('selected');
+                        selectedMedicationClass = null;
+                    } else {
+                        // Reset all badges
+                        medicationClassBadges.forEach(b => {
+                            b.classList.remove('selected');
+                        });
+                        
+                        // Select new badge
+                        this.classList.add('selected');
+                        selectedMedicationClass = this.dataset.class;
+                        
+                        // Add system message to chat
+                        addSystemMessage(`Selected medication class: ${selectedMedicationClass}`);
+                    }
+                });
+            });
+            
+            // Handle medication selection
+            const medicationBadges = document.querySelectorAll('.medication-badge');
+            medicationBadges.forEach(badge => {
+                badge.addEventListener('click', function() {
+                    const medication = this.textContent;
+                    const medicationClass = this.dataset.class;
+                    
+                    // Auto-select the medication class if not already selected
+                    if (selectedMedicationClass !== medicationClass) {
+                        // Reset all medication class badges
+                        medicationClassBadges.forEach(b => {
+                            b.classList.remove('selected');
+                        });
+                        
+                        // Find and select the corresponding class badge
+                        const classBadge = document.querySelector(`.medication-class-badge[data-class="${medicationClass}"]`);
+                        if (classBadge) {
+                            classBadge.classList.add('selected');
+                            selectedMedicationClass = medicationClass;
+                        }
+                    }
+                    
+                    let query = `What tier is ${medication}`;
+                    if (selectedInsurance) {
+                        query += ` in ${selectedInsurance} insurance`;
+                    }
+                    questionInput.value = query;
+                    questionInput.focus();
+                    questionInput.dispatchEvent(new Event('input'));
+                    
+                    // Hide sidebar on mobile
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Function to add user message to chat
+            function addUserMessage(message) {
+                const messageRow = document.createElement('div');
+                messageRow.className = 'message-row user-row';
+                messageRow.innerHTML = `
+                    <div class="avatar user-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="message-content">
+                        ${message}
+                    </div>
+                `;
+                chatContainer.appendChild(messageRow);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Function to add assistant message to chat
+            function addAssistantMessage(message) {
+                const messageRow = document.createElement('div');
+                messageRow.className = 'message-row assistant-row';
+                messageRow.innerHTML = `
+                    <div class="avatar assistant-avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        ${message}
+                    </div>
+                `;
+                chatContainer.appendChild(messageRow);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Function to add system message to chat
+            function addSystemMessage(message) {
+                const messageRow = document.createElement('div');
+                messageRow.className = 'message-row assistant-row';
+                messageRow.innerHTML = `
+                    <div class="avatar assistant-avatar">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <div class="message-content">
+                        <em>${message}</em>
+                    </div>
+                `;
+                chatContainer.appendChild(messageRow);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
