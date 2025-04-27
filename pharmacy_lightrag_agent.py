@@ -13,6 +13,15 @@ from pinecone import Pinecone
 import numpy as np
 from sklearn.decomposition import PCA
 
+# Import LightRAG components
+try:
+    from lightrag.llm.openai import gpt_4o_complete
+    from lightrag.llm.openai import openai_embed
+    LIGHTRAG_AVAILABLE = True
+except ImportError:
+    LIGHTRAG_AVAILABLE = False
+    print("LightRAG not available, using direct API calls instead.")
+
 # Load environment variables
 load_dotenv()
 
