@@ -16,5 +16,5 @@ fastapi>=0.95.0
 uvicorn>=0.21.1
 
 # Install LightRAG from GitHub
-git+https://github.com/cfortuner/lightrag.git
+git+https://github.com/HKUDS/LightRAG.git
 

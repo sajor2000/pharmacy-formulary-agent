@@ -15,8 +15,9 @@ from sklearn.decomposition import PCA
 
 # Import LightRAG components
 try:
-    from lightrag.llm.openai import gpt_4o_complete
-    from lightrag.llm.openai import openai_embed
+    # Try importing from the HKUDS/LightRAG repository structure
+    from LightRAG.src.utils.openai_utils import get_embedding as openai_embed
+    from LightRAG.src.utils.openai_utils import get_completion as gpt_4o_complete
     LIGHTRAG_AVAILABLE = True
 except ImportError:
     LIGHTRAG_AVAILABLE = False
