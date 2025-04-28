@@ -227,10 +227,18 @@ class PharmacyFormularyAgent:
             # Always require Pinecone connection - no fallback mode
             
             # Generate embedding for the query
-            query_embedding = self._generate_embedding(augmented_query)
-            
-            if not query_embedding:
-                return "I'm sorry, I couldn't process your query. Please try again."
+            try:
+                logger.info(f"Generating embedding for query: {augmented_query[:100]}...")
+                query_embedding = self._generate_embedding(augmented_query)
+                
+                if not query_embedding:
+                    error_msg = "Failed to generate embedding for query"
+                    logger.error(error_msg)
+                    return f"Error: {error_msg}"
+            except Exception as e:
+                error_msg = f"Error generating embedding: {e}"
+                logger.error(error_msg)
+                return f"Error: {error_msg}"
             
             # No need to resize embedding as we're using text-embedding-3-large which outputs 3072 dimensions
             # which matches our Pinecone index
@@ -238,12 +246,17 @@ class PharmacyFormularyAgent:
             # Search Pinecone for relevant documents
             # Increase top_k for table-heavy content to get more context
             top_k = 15 if 'table' in question.lower() or 'tier' in question.lower() else 10
-            search_results = self._search_pinecone(query_embedding, top_k=top_k)
-            
-            if not search_results or not search_results.get('matches'):
-                return "I couldn't find any relevant information in the formulary database. Please try a different query."
-            
-            # Extract context from search results with table awareness
+            try:
+                search_results = self._search_pinecone(query_embedding, top_k=top_k)
+                
+                if not search_results or not search_results.get('matches'):
+                    return "I couldn't find any relevant information in the formulary database. Please try a different query."
+                
+                # Extract context from search results with table awareness
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(f"Pinecone search failed: {error_msg}")
+                return f"Error: {error_msg}"
             context = self._extract_context(search_results, insurance)
             
             # Check if we have table data in the context
@@ -387,20 +400,21 @@ class PharmacyFormularyAgent:
         """Search Pinecone for relevant documents"""
         # Check if Pinecone is available
         if self.index is None:
-            logger.warning("Pinecone index is not available. Cannot perform search.")
-            return None
+            error_msg = "Pinecone index is not available. Cannot perform search."
+            logger.warning(error_msg)
+            raise Exception(error_msg)
             
         try:
             results = self.index.query(
-                namespace="formulary",
                 vector=query_embedding,
                 top_k=top_k,
                 include_metadata=True
             )
             return results
         except Exception as e:
-            logger.error(f"Error searching Pinecone: {e}")
-            return None
+            error_msg = f"Error searching Pinecone: {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
     
     def _extract_context(self, search_results, insurance=None):
         """Extract context from search results with table awareness"""
