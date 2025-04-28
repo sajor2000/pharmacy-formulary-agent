@@ -602,30 +602,22 @@ class PharmacyFormularyAgent:
     def direct_query(self, query):
         """Query the agent directly with OpenAI without using RAG"""
         try:
-            # Check if this is a CountyCare ICS-LABA query
-            is_countycare_ics_laba = False
-            if "countycare" in query.lower() and ("ics-laba" in query.lower() or 
-                                               "ics laba" in query.lower() or
-                                               "inhaled corticosteroid" in query.lower()):
-                is_countycare_ics_laba = True
-                print("Detected CountyCare ICS-LABA query, using structured format")
+            logger.info(f"Starting direct query for: {query[:100]}...")
             
-            # Use a simple prompt template
-            if is_countycare_ics_laba:
-                # Use a specialized prompt for CountyCare ICS-LABA queries
-                prompt = f"""Please provide detailed information about CountyCare coverage for ICS-LABA inhalers.
-                Follow the exact structured format for CountyCare ICS-LABA information as specified in your instructions.
-                Make sure to include all the required sections: confirmation, title, primary recommendations, alternative options,
-                coverage notes, and verification.
-                
-                Question: {query}
-                """
-            else:
-                prompt = f"""
-                Answer the following question about pharmacy formularies:
-                {query}
-                """
+            # Prepare a general prompt that works for any query type
+            prompt = f"""
+            Please provide information about the following pharmacy formulary question:
             
+            QUESTION: {query}
+            
+            IMPORTANT INSTRUCTIONS:
+            1. Use your general knowledge about pharmacy formularies and medication coverage
+            2. Format your response according to the system instructions
+            3. If you don't have specific information, provide general guidance
+            4. Be helpful and informative even with limited information
+            """
+            
+            logger.info("Generating direct response using OpenAI...")
             # Generate completion using OpenAI
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
@@ -633,15 +625,16 @@ class PharmacyFormularyAgent:
                     {"role": "system", "content": self.system_message},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
+                temperature=0.5,
                 max_tokens=1500
             )
             
+            logger.info("Direct query response generated successfully")
             return response.choices[0].message.content
             
         except Exception as e:
-            print(f"Error querying agent: {e}")
-            return f"I'm sorry, I encountered an error: {e}"
+            logger.error(f"Error in direct_query: {e}")
+            raise Exception(f"Direct query failed: {str(e)}")
     
     def get_medication_tier(self, medication_name, insurance_provider=None):
         """Get the tier for a specific medication"""
