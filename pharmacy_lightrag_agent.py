@@ -62,23 +62,34 @@ class PharmacyFormularyAgent:
         logger.info(f"Successfully connected to Pinecone index 'finalpharm' with {stats.get('total_vector_count', 0)} vectors")
         
         # Define system message for structured formatting
-        self.system_message = """You are a pharmacy formulary assistant for nurses. 
-        Your goal is to provide accurate, concise information about medication coverage.
-        Focus on answering questions about respiratory inhalers and their formulary status.
+        self.system_message = """You are a helpful pharmacy formulary assistant for nurses. 
+        Your goal is to provide accurate, concise information about medication coverage for all types of insurance plans.
         
-        IMPORTANT: For ALL responses, use a structured, visually appealing format with the following elements:
+        IMPORTANT GUIDELINES:
+        
+        1. Be helpful and informative even if you don't have complete information
+        2. For general questions, provide general information about formularies and medication coverage
+        3. If a query is vague, respond with useful information rather than asking for more specificity
+        4. Always assume the user is a nurse who needs practical information about medication coverage
+        
+        FOR MEDICATION-SPECIFIC RESPONSES:
+        Use a structured, visually appealing format with the following elements:
         
         1. Start with a brief confirmation of what you're answering
         2. Use a big, clear, centered title with an emoji (e.g., 🌟 Blue Cross Inhaler Coverage)
         3. Use markdown headings (##, ###) for clear structure
-        4. For medication information, always use bullet lists with these bolded fields:
+        4. For medication information, use bullet lists with these bolded fields when applicable:
            - **Name:** (with brand formatting, e.g., Advair Diskus®)
            - **Form:** (Generic or Brand)
-           - **Device type:** (DPI, MDI, etc.)
-           - **Strength:** (All available doses)
+           - **Device type:** (if applicable)
+           - **Strength:** (Available doses)
            - **Tier:** (Formulary tier if available)
            - **Requirements:** (PA, Step Therapy, Quantity Limit)
            - **Quantity limit:** (Specify the monthly limit)
+        
+        FOR GENERAL QUERIES:
+        Provide helpful information about pharmacy formularies, insurance coverage, or medication access.
+        Use clear headings, bullet points, and emojis to make information easy to scan.
            - **Estimated Copay:** (Dollar amount if known)
         5. Include an "Alternative Options" section when relevant
         6. Include a "Coverage Notes" section with important rules or details
@@ -250,7 +261,9 @@ class PharmacyFormularyAgent:
                 search_results = self._search_pinecone(query_embedding, top_k=top_k)
                 
                 if not search_results or not search_results.get('matches'):
-                    return "I couldn't find any relevant information in the formulary database. Please try a different query."
+                    # Generate a helpful response even if no exact matches are found
+                    logger.info("No exact matches found, generating general response")
+                    return self._generate_general_response(enhanced_query)
                 
                 # Extract context from search results with table awareness
             except Exception as e:
@@ -539,9 +552,9 @@ class PharmacyFormularyAgent:
             return "I'm sorry, I encountered an error while generating a response. Please try again."
     
     def _generate_fallback_response(self, query):
-        """Generate a response when Pinecone is unavailable"""
+        """Generate a fallback response when Pinecone is unavailable"""
         try:
-            # Create a general response about pharmacy formularies
+            # Use OpenAI to generate a response without RAG context
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -551,12 +564,29 @@ class PharmacyFormularyAgent:
                 temperature=0.3,
                 max_tokens=1500
             )
-            
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating fallback response: {e}")
-            return "I'm sorry, our formulary database is currently unavailable. Please try again later or contact your pharmacy benefits manager for specific coverage information."
-    
+            return f"I'm sorry, I couldn't process your query due to a technical issue: {e}"
+            
+    def _generate_general_response(self, query):
+        """Generate a helpful general response when no exact matches are found"""
+        try:
+            # Use OpenAI to generate a helpful response based on the query
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": self.system_message},
+                    {"role": "user", "content": f"I need information about {query}. Even though we don't have exact matches in our database, please provide a helpful, informative response about this topic related to pharmacy formularies, insurance coverage, or medication access. Use your general knowledge to give useful information to a nurse. Make sure to format your response according to the structured format guidelines with emojis and clear sections."}
+                ],
+                temperature=0.5,
+                max_tokens=1500
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error generating general response: {e}")
+            return f"I'm sorry, I couldn't process your query due to a technical issue: {e}"
+
     def direct_query(self, query):
         """Query the agent directly with OpenAI without using RAG"""
         try:
