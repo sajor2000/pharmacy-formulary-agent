@@ -49,18 +49,17 @@ class PharmacyFormularyAgent:
         # Initialize OpenAI client
         self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
         
-        # Initialize Pinecone with the new API structure
-        try:
-            self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
-            self.index = self.pinecone_client.Index("finalpharm")
-            logger.info("Successfully connected to Pinecone index 'finalpharm'")
-        except Exception as e:
-            logger.error(f"Error connecting to Pinecone: {e}")
-            # Create a fallback mechanism to allow the app to run without Pinecone
-            # This will allow the app to deploy and respond to basic questions
-            self.pinecone_client = None
-            self.index = None
-            logger.warning("Running in fallback mode without Pinecone connection")
+        # Initialize Pinecone with the new API structure - no fallback
+        logger.info(f"Initializing Pinecone with API key: {self.pinecone_api_key[:5]}...{self.pinecone_api_key[-5:]}")
+        self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
+        
+        # Connect to the finalpharm index
+        logger.info("Connecting to finalpharm index...")
+        self.index = self.pinecone_client.Index("finalpharm")
+        
+        # Verify connection by getting stats
+        stats = self.index.describe_index_stats()
+        logger.info(f"Successfully connected to Pinecone index 'finalpharm' with {stats.get('total_vector_count', 0)} vectors")
         
         # Define system message for structured formatting
         self.system_message = """You are a pharmacy formulary assistant for nurses. 
@@ -225,10 +224,7 @@ class PharmacyFormularyAgent:
             if medication_class:
                 augmented_query += f" in the {medication_class} class"
             
-            # Check if we're in fallback mode (no Pinecone connection)
-            if self.index is None:
-                logger.warning("Using fallback mode without Pinecone for query: " + augmented_query)
-                return self._generate_fallback_response(augmented_query)
+            # Always require Pinecone connection - no fallback mode
             
             # Generate embedding for the query
             query_embedding = self._generate_embedding(augmented_query)
