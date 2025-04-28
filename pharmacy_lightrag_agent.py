@@ -50,8 +50,17 @@ class PharmacyFormularyAgent:
         self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
         
         # Initialize Pinecone with the new API structure
-        self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
-        self.index = self.pinecone_client.Index("finalpharm")
+        try:
+            self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
+            self.index = self.pinecone_client.Index("finalpharm")
+            logger.info("Successfully connected to Pinecone index 'finalpharm'")
+        except Exception as e:
+            logger.error(f"Error connecting to Pinecone: {e}")
+            # Create a fallback mechanism to allow the app to run without Pinecone
+            # This will allow the app to deploy and respond to basic questions
+            self.pinecone_client = None
+            self.index = None
+            logger.warning("Running in fallback mode without Pinecone connection")
         
         # Define system message for structured formatting
         self.system_message = """You are a pharmacy formulary assistant for nurses. 
@@ -216,6 +225,11 @@ class PharmacyFormularyAgent:
             if medication_class:
                 augmented_query += f" in the {medication_class} class"
             
+            # Check if we're in fallback mode (no Pinecone connection)
+            if self.index is None:
+                logger.warning("Using fallback mode without Pinecone for query: " + augmented_query)
+                return self._generate_fallback_response(augmented_query)
+            
             # Generate embedding for the query
             query_embedding = self._generate_embedding(augmented_query)
             
@@ -321,7 +335,7 @@ class PharmacyFormularyAgent:
             else:
                 # Direct API call
                 response = self.openai_client.embeddings.create(
-                    model="text-embedding-ada-002",
+                    model="text-embedding-3-large",
                     input=text
                 )
                 embedding = response.data[0].embedding
@@ -375,6 +389,11 @@ class PharmacyFormularyAgent:
     
     def _search_pinecone(self, query_embedding, top_k=10):
         """Search Pinecone for relevant documents"""
+        # Check if Pinecone is available
+        if self.index is None:
+            logger.warning("Pinecone index is not available. Cannot perform search.")
+            return None
+            
         try:
             results = self.index.query(
                 namespace="formulary",
@@ -502,6 +521,25 @@ class PharmacyFormularyAgent:
         except Exception as e:
             logger.error(f"Error generating direct response: {e}")
             return "I'm sorry, I encountered an error while generating a response. Please try again."
+    
+    def _generate_fallback_response(self, query):
+        """Generate a response when Pinecone is unavailable"""
+        try:
+            # Create a general response about pharmacy formularies
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": self.system_message},
+                    {"role": "user", "content": f"I need information about {query}. Please provide a general response about pharmacy formularies and how they work, since our database connection is currently unavailable. Make sure to format your response according to the structured format guidelines with emojis and clear sections."}
+                ],
+                temperature=0.3,
+                max_tokens=1500
+            )
+            
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error generating fallback response: {e}")
+            return "I'm sorry, our formulary database is currently unavailable. Please try again later or contact your pharmacy benefits manager for specific coverage information."
     
     def direct_query(self, query):
         """Query the agent directly with OpenAI without using RAG"""

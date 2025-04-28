@@ -71,24 +71,17 @@ class CamelotProcessor:
             raise ValueError("PINECONE_API_KEY environment variable not set")
         
         # Initialize Pinecone client with the new API structure
-        self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
-        
-        # Try to connect to existing index
         try:
-            # First try normal connection
-            try:
-                self.index = self.pinecone_client.Index(self.index_name)
-                logger.info(f"Connected to existing Pinecone index: {self.index_name}")
-            except Exception as e:
-                logger.warning(f"Standard connection failed: {e}")
-                # Try direct connection using the full URL
-                host = "https://finalpharm-skb951r.svc.aped-4627-b74a.pinecone.io"
-                logger.info(f"Trying direct connection using host URL: {host}")
-                self.index = self.pinecone_client.Index(host=host)
-                logger.info(f"Connected to Pinecone index using direct host URL")
+            self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
+            
+            # Try to connect to existing index
+            self.index = self.pinecone_client.Index(self.index_name)
+            logger.info(f"Connected to existing Pinecone index: {self.index_name}")
         except Exception as e:
             logger.error(f"Error connecting to Pinecone index: {e}")
-            raise
+            logger.warning("Continuing without Pinecone connection. PDF processing will not be available.")
+            self.pinecone_client = None
+            self.index = None
         
         # Pharmacy-related keywords to identify formulary tables
         self.formulary_keywords = [

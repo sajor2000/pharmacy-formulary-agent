@@ -87,7 +87,9 @@ class UnstructuredProcessor:
             logger.info(f"Connected to existing Pinecone index: {self.index_name}")
         except Exception as e:
             logger.error(f"Error connecting to Pinecone index: {e}")
-            raise
+            logger.warning("Continuing without Pinecone connection. PDF processing will not be available.")
+            self.pinecone_client = None
+            self.index = None
         
         # Pharmacy-related keywords to identify formulary tables
         self.formulary_keywords = [
