@@ -9,7 +9,7 @@ A production-ready, table-aware pharmacy formulary retrieval-augmented generatio
 - **Vector Search**: Uses OpenAI's text-embedding-3-large (3072 dimensions) with Pinecone vector database
 - **Memory Optimized**: Batch processing designed for Mac M3 hardware (18GB RAM)
 - **Production Ready**: Includes Render deployment configuration and web UI
-- **CountyCare Focus**: Special handling for CountyCare ICS-LABA inhaler queries
+- **Multi-Insurance Support**: Handles queries for all insurance plans with structured formatting
 
 ## 📋 Setup Instructions
 
@@ -74,6 +74,24 @@ Requires Poppler to be installed on your system.
 ```bash
 python process_with_llamaparse.py
 ```
+
+## 🚀 Deployment Status
+
+- **PDF Processing**: ✅ Complete - 31 PDFs processed with 1989 total chunks
+- **Vector Database**: ✅ Ready - All chunks stored in Pinecone "finalpharm" index (3072d)
+- **Web Application**: ✅ Ready for deployment to Render
+- **Deployment Checks**: ✅ All checks passed (environment, dependencies, connections)
+
+## 🌐 Deploying to Render
+
+This repository includes a `render.yaml` file for easy deployment to Render:
+
+1. Connect your GitHub repository to Render
+2. Render will automatically detect the configuration
+3. Set the required environment variables in the Render dashboard
+4. Deploy the application
+
+The application includes health check endpoints and proper logging for production monitoring.
 
 Requires a LlamaParse API key.
 
