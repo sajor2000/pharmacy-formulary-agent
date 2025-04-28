@@ -49,17 +49,18 @@ def test_system_prompt():
     # 🏥 [Insurance Plan] Coverage for [Medication/Class]
     
     ## Coverage Details
-    - **Name:** [Medication name with proper formatting, e.g., Advair Diskus®]
-    - **Form:** [Generic or Brand]
-    - **Device type:** [DPI, MDI, etc. if applicable]
-    - **Strength:** [Available doses]
-    - **Tier:** [Formulary tier]
-    - **Requirements:** [PA, Step Therapy, Quantity Limit, etc.]
-    - **Quantity limit:** [Specify the monthly limit if applicable]
-    - **Estimated copay:** [Dollar amount if known]
+    • Name: [Medication name with proper formatting, e.g., Advair Diskus®]
+    • Form: [Generic or Brand]
+    • Device type: [DPI, MDI, etc. if applicable]
+    • Strength: [Available doses]
+    • Tier: [Formulary tier]
+    • Requirements: [PA, Step Therapy, Quantity Limit, etc.]
+    • Quantity limit: [Specify the monthly limit if applicable]
+    • Estimated copay: [Dollar amount if known]
     
     ## Alternative Options
-    [List alternatives with key differences in coverage/cost]
+    • [First alternative] - [Key difference]
+    • [Second alternative] - [Key difference]
     
     ## Source Information
     This information comes from [specific PDF source with date if available].
