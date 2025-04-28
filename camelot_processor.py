@@ -70,11 +70,7 @@ class CamelotProcessor:
         if not self.pinecone_api_key:
             raise ValueError("PINECONE_API_KEY environment variable not set")
         
-        self.pinecone_env = os.getenv("PINECONE_ENVIRONMENT")
-        if not self.pinecone_env:
-            raise ValueError("PINECONE_ENVIRONMENT environment variable not set")
-        
-        # Initialize Pinecone client
+        # Initialize Pinecone client with the new API structure
         self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
         
         # Try to connect to existing index

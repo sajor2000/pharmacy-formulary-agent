@@ -74,62 +74,32 @@ def check_dependencies():
 def check_pinecone_connection():
     """Check that Pinecone connection is working"""
     try:
-        # Try new package structure first
-        try:
-            from pinecone import Pinecone
+        from pinecone import Pinecone
+        
+        api_key = os.getenv('PINECONE_API_KEY')
+        if not api_key:
+            logger.error("❌ PINECONE_API_KEY is not set")
+            return False
+        
+        # Initialize with the new API structure only
+        pc = Pinecone(api_key=api_key)
+        
+        # Try to list indexes
+        indexes = pc.list_indexes()
+        logger.info(f"✅ Successfully connected to Pinecone. Available indexes: {indexes}")
+        
+        # Check if finalpharm index exists
+        if any(index.name == "finalpharm" for index in indexes):
+            logger.info("✅ finalpharm index exists")
             
-            api_key = os.getenv('PINECONE_API_KEY')
-            if not api_key:
-                logger.error("❌ PINECONE_API_KEY is not set")
-                return False
-            
-            pc = Pinecone(api_key=api_key)
-            
-            # Try to list indexes
-            indexes = pc.list_indexes()
-            logger.info(f"✅ Successfully connected to Pinecone. Available indexes: {indexes}")
-            
-            # Check if finalpharm index exists
-            if any(index.name == "finalpharm" for index in indexes):
-                logger.info("✅ finalpharm index exists")
-                
-                # Try to connect to the index
-                index = pc.Index("finalpharm")
-                stats = index.describe_index_stats()
-                logger.info(f"✅ Connected to finalpharm index. Vector count: {stats.get('total_vector_count', 0)}")
-                return True
-            else:
-                logger.error("❌ finalpharm index does not exist")
-                return False
-                
-        except ImportError:
-            # Fall back to old package structure
-            import pinecone
-            
-            api_key = os.getenv('PINECONE_API_KEY')
-            env = os.getenv('PINECONE_ENVIRONMENT')
-            if not api_key or not env:
-                logger.error("❌ PINECONE_API_KEY or PINECONE_ENVIRONMENT is not set")
-                return False
-            
-            pinecone.init(api_key=api_key, environment=env)
-            
-            # Try to list indexes
-            indexes = pinecone.list_indexes()
-            logger.info(f"✅ Successfully connected to Pinecone. Available indexes: {indexes}")
-            
-            # Check if finalpharm index exists
-            if "finalpharm" in indexes:
-                logger.info("✅ finalpharm index exists")
-                
-                # Try to connect to the index
-                index = pinecone.Index("finalpharm")
-                stats = index.describe_index_stats()
-                logger.info(f"✅ Connected to finalpharm index. Vector count: {stats.get('total_vector_count', 0)}")
-                return True
-            else:
-                logger.error("❌ finalpharm index does not exist")
-                return False
+            # Try to connect to the index
+            index = pc.Index("finalpharm")
+            stats = index.describe_index_stats()
+            logger.info(f"✅ Connected to finalpharm index. Vector count: {stats.get('total_vector_count', 0)}")
+            return True
+        else:
+            logger.error("❌ finalpharm index does not exist")
+            return False
 
     
     except Exception as e:

@@ -12,17 +12,8 @@ import openai
 import numpy as np
 from sklearn.decomposition import PCA
 
-# Handle Pinecone import for both old and new package structures
-try:
-    # New package structure
-    from pinecone import Pinecone
-except ImportError:
-    try:
-        # Old package structure
-        import pinecone
-        Pinecone = pinecone.Pinecone if hasattr(pinecone, 'Pinecone') else pinecone
-    except ImportError:
-        raise ImportError("Could not import Pinecone. Please install with 'pip install pinecone'.")
+# Import Pinecone with the new API structure
+from pinecone import Pinecone
 
 # Import LightRAG components
 try:
@@ -58,19 +49,9 @@ class PharmacyFormularyAgent:
         # Initialize OpenAI client
         self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
         
-        # Initialize Pinecone
-        try:
-            # New package structure
-            self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
-            self.index = self.pinecone_client.Index("finalpharm")
-        except Exception as e:
-            # Old package structure fallback
-            try:
-                import pinecone
-                pinecone.init(api_key=self.pinecone_api_key, environment=self.pinecone_environment)
-                self.index = pinecone.Index("finalpharm")
-            except Exception as nested_e:
-                raise Exception(f"Failed to initialize Pinecone: {e}. Nested error: {nested_e}")
+        # Initialize Pinecone with the new API structure
+        self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
+        self.index = self.pinecone_client.Index("finalpharm")
         
         # Define system message for structured formatting
         self.system_message = """You are a pharmacy formulary assistant for nurses. 
