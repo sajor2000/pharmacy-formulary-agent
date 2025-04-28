@@ -66,48 +66,39 @@ def query():
     try:
         logger.info(f"Processing query: '{enhanced_query}' with insurance: {insurance}, medication_class: {medication_class}")
         
-        # Add detailed logging
-        logger.info("Step 1: Starting query processing")
+        # Add detailed logging to diagnose issues
+        logger.info("Step 1: Attempting RAG query (primary method)")
         
-        # Try a direct query first to see if that works
+        # Try the RAG query first - this is the primary method we want to use
         try:
-            logger.info("Attempting direct query without RAG...")
-            direct_response = agent.direct_query(enhanced_query)
-            logger.info("Direct query successful")
-            return jsonify({'response': direct_response, 'method': 'direct'})
-        except Exception as direct_error:
-            logger.warning(f"Direct query failed: {direct_error}. Falling back to RAG query.")
-        
-        # If direct query fails, try the regular RAG query
-        logger.info("Step 2: Attempting regular RAG query")
-        response = agent.query(enhanced_query, insurance, medication_class)
-        
-        logger.info("Query processed successfully")
-        return jsonify({'response': response, 'method': 'rag'})
+            response = agent.query(enhanced_query, insurance, medication_class)
+            logger.info("RAG query processed successfully")
+            return jsonify({'response': response})
+        except Exception as rag_error:
+            # If RAG fails, log the specific error and try fallback
+            error_details = str(rag_error)
+            logger.error(f"RAG query failed with error: {error_details}")
+            
+            # Check for specific error types to provide better diagnostics
+            if "Pinecone" in error_details:
+                logger.error("Pinecone connection issue detected")
+            elif "embedding" in error_details.lower():
+                logger.error("Embedding generation issue detected")
+            
+            # Only use fallbacks if RAG fails
+            logger.info("Step 2: Attempting direct query fallback")
+            try:
+                direct_response = agent.direct_query(enhanced_query)
+                logger.info("Direct query fallback successful")
+                return jsonify({'response': direct_response, 'note': 'Using general knowledge (RAG unavailable)'})
+            except Exception as direct_error:
+                logger.error(f"Direct query fallback also failed: {direct_error}")
+                raise rag_error  # Re-raise the original RAG error
+    
     except Exception as e:
         error_msg = str(e)
-        logger.error(f"Error processing query: {error_msg}")
-        
-        # Try one last fallback with a simple completion
-        try:
-            logger.info("Attempting emergency fallback response...")
-            if agent and agent.openai_client:
-                fallback = agent.openai_client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful pharmacy formulary assistant."},
-                        {"role": "user", "content": f"Please provide a general response about: {enhanced_query}"}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1000
-                )
-                fallback_response = fallback.choices[0].message.content
-                logger.info("Emergency fallback successful")
-                return jsonify({'response': fallback_response, 'method': 'emergency_fallback'})
-        except Exception as fallback_error:
-            logger.error(f"Emergency fallback also failed: {fallback_error}")
-        
-        return jsonify({'error': error_msg})
+        logger.error(f"All query methods failed. Final error: {error_msg}")
+        return jsonify({'error': f"I'm sorry, I couldn't process your query: {error_msg}"})
 
 @app.route('/medication_tier', methods=['POST'])
 def medication_tier():

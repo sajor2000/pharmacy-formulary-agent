@@ -257,11 +257,11 @@ class PharmacyFormularyAgent:
                 if not query_embedding:
                     error_msg = "Failed to generate embedding for query"
                     logger.error(error_msg)
-                    return f"Error: {error_msg}"
+                    raise Exception(error_msg)
             except Exception as e:
                 error_msg = f"Error generating embedding: {e}"
                 logger.error(error_msg)
-                return f"Error: {error_msg}"
+                raise Exception(error_msg)
             
             # No need to resize embedding as we're using text-embedding-3-large which outputs 3072 dimensions
             # which matches our Pinecone index
@@ -600,11 +600,11 @@ class PharmacyFormularyAgent:
             return f"I'm sorry, I couldn't process your query due to a technical issue: {e}"
 
     def direct_query(self, query):
-        """Query the agent directly with OpenAI without using RAG"""
+        """Query the agent directly with OpenAI without using RAG - FALLBACK METHOD"""
         try:
-            logger.info(f"Starting direct query for: {query[:100]}...")
+            logger.info(f"Starting direct query fallback for: {query[:100]}...")
             
-            # Prepare a general prompt that works for any query type
+            # Prepare a general prompt that works for any query type, with fallback notice
             prompt = f"""
             Please provide information about the following pharmacy formulary question:
             
@@ -613,11 +613,12 @@ class PharmacyFormularyAgent:
             IMPORTANT INSTRUCTIONS:
             1. Use your general knowledge about pharmacy formularies and medication coverage
             2. Format your response according to the system instructions
-            3. If you don't have specific information, provide general guidance
-            4. Be helpful and informative even with limited information
+            3. Begin your response with a brief note that this is general information, as the RAG database is currently unavailable
+            4. If you don't have specific information, provide general guidance
+            5. Be helpful and informative even with limited information
             """
             
-            logger.info("Generating direct response using OpenAI...")
+            logger.info("Generating fallback response using OpenAI...")
             # Generate completion using OpenAI
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
@@ -629,12 +630,12 @@ class PharmacyFormularyAgent:
                 max_tokens=1500
             )
             
-            logger.info("Direct query response generated successfully")
+            logger.info("Fallback response generated successfully")
             return response.choices[0].message.content
             
         except Exception as e:
-            logger.error(f"Error in direct_query: {e}")
-            raise Exception(f"Direct query failed: {str(e)}")
+            logger.error(f"Error in direct_query fallback: {e}")
+            raise Exception(f"Fallback query failed: {str(e)}")
     
     def get_medication_tier(self, medication_name, insurance_provider=None):
         """Get the tier for a specific medication"""
