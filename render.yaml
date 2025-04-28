@@ -1,10 +1,13 @@
 services:
-  # A Flask API service
+  # A Flask API service for the Pharmacy Formulary RAG Agent
   - type: web
     name: pharmacy-formulary-agent
     env: python
+    plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --timeout 120
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -14,3 +17,12 @@ services:
         sync: false
       - key: PINECONE_ENVIRONMENT
         sync: false
+      - key: LLAMAPARSE_API_KEY
+        sync: false
+        # Optional, comment out if not using LlamaParse
+    scaling:
+      minInstances: 1
+      maxInstances: 1
+      targetMemoryPercent: 80
+    domains:
+      - pharmacy-formulary-agent

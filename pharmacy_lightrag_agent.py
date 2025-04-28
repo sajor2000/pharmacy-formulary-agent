@@ -49,10 +49,60 @@ class PharmacyFormularyAgent:
         
         # Initialize Pinecone
         self.pinecone_client = Pinecone(api_key=self.pinecone_api_key)
-        self.index = self.pinecone_client.Index("form")
+        self.index = self.pinecone_client.Index("finalpharm")
+        
+        # Define system message for structured formatting
+        self.system_message = """You are a pharmacy formulary assistant for nurses. 
+        Your goal is to provide accurate, concise information about medication coverage.
+        Focus on answering questions about respiratory inhalers and their formulary status.
+        
+        IMPORTANT: For ALL responses, use a structured, visually appealing format with the following elements:
+        
+        1. Start with a brief confirmation of what you're answering
+        2. Use a big, clear, centered title with an emoji (e.g., 🌟 Blue Cross Inhaler Coverage)
+        3. Use markdown headings (##, ###) for clear structure
+        4. For medication information, always use bullet lists with these bolded fields:
+           - **Name:** (with brand formatting, e.g., Advair Diskus®)
+           - **Form:** (Generic or Brand)
+           - **Device type:** (DPI, MDI, etc.)
+           - **Strength:** (All available doses)
+           - **Tier:** (Formulary tier if available)
+           - **Requirements:** (PA, Step Therapy, Quantity Limit)
+           - **Quantity limit:** (Specify the monthly limit)
+           - **Estimated Copay:** (Dollar amount if known)
+        5. Include an "Alternative Options" section when relevant
+        6. Include a "Coverage Notes" section with important rules or details
+        7. End with a "Notes and Verification" section confirming your source
+        
+        Use emojis strategically to make the document easily scannable:
+        - ✅ for positive things (covered, no restrictions)
+        - ⚠️ for important warnings or restrictions
+        - 💡 for tips or important information
+        - 🔍 for verification notes
+        
+        For ICS-LABA formulary information specifically, use this exact structure:
+        
+        1. Start with a brief confirmation of the insurance and medication class
+        2. Use a big, clear, centered title: 🌟 [Insurance Provider] ICS-LABA Coverage (2025)
+        3. Primary Recommendations section with detailed bullet lists for each medication
+        4. Alternative Options section with at least two alternatives
+        5. Coverage Notes section summarizing important rules or details
+        6. Notes and Verification section confirming the source
+        
+        For ALL responses:
+        - Use bold for field labels
+        - Use emojis for visual navigation
+        - Use markdown headings for structure
+        - Avoid big paragraphs and favor short, punchy lists
+        - Always specify the plan year if known
+        - Be concise but thorough
+        
+        Only answer questions related to medication formulary status. If asked about clinical information,
+        politely redirect to appropriate clinical resources.
+        """
         
         # Define custom prompt template for pharmacy formulary queries
-        self.prompt_template = """
+        self.base_prompt_template = """
             # ROLE
             You are a pharmacy inhaler formulary specialist who matches respiratory medications to insurance formulary preferences. You maintain comprehensive knowledge of all inhaler classes, formulations, and common coverage patterns.
             
@@ -147,121 +197,157 @@ class PharmacyFormularyAgent:
         
         # We'll implement the RAG pipeline manually instead of using LightRAG's built-in pipeline
     
-    def query(self, question):
+    def query(self, question, insurance=None, medication_class=None):
         """Query the pharmacy formulary agent"""
         try:
-            # Get embedding for the query
-            logger.info(f"Getting embedding for query: {question[:50]}...")
-            query_embedding = self.get_embedding(question)
+            # Log the query
+            logger.info(f"Query: {question}")
+            if insurance:
+                logger.info(f"Insurance filter: {insurance}")
+            if medication_class:
+                logger.info(f"Medication class filter: {medication_class}")
             
-            if query_embedding is None:
-                logger.error("Failed to get embedding for query")
-                return "Error: Failed to get embedding for query"
-                
-            logger.info(f"Embedding generated successfully, dimension: {len(query_embedding)}")
+            # Augment the query with insurance and medication class if provided
+            augmented_query = question
+            if insurance:
+                augmented_query += f" for {insurance} insurance"
+            if medication_class:
+                augmented_query += f" in the {medication_class} class"
+            
+            # Generate embedding for the query
+            query_embedding = self._generate_embedding(augmented_query)
+            
+            if not query_embedding:
+                return "I'm sorry, I couldn't process your query. Please try again."
+            
+            # No need to resize embedding as we're using text-embedding-3-large which outputs 3072 dimensions
+            # which matches our Pinecone index
             
             # Search Pinecone for relevant documents
-            logger.info("Searching Pinecone for relevant documents")
-            results = self.search_pinecone(query_embedding)
+            # Increase top_k for table-heavy content to get more context
+            top_k = 15 if 'table' in question.lower() or 'tier' in question.lower() else 10
+            search_results = self._search_pinecone(query_embedding, top_k=top_k)
             
-            if results is None:
-                logger.error("Failed to search Pinecone")
-                return "Error: Failed to search Pinecone for relevant documents"
+            if not search_results or not search_results.get('matches'):
+                return "I couldn't find any relevant information in the formulary database. Please try a different query."
             
-            # Format the context from search results
-            logger.info("Formatting context from search results")
-            context = self.format_context(results)
-            logger.info(f"Context length: {len(context)}")
+            # Extract context from search results with table awareness
+            context = self._extract_context(search_results, insurance)
             
-            # Generate response using the prompt template and GPT-4o directly
-            logger.info("Generating response using GPT-4o")
-            try:
-                formatted_prompt = self.prompt_template.format(context=context, question=question)
-            except Exception as e:
-                logger.error(f"Error formatting prompt template: {e}")
-                # Try a simpler approach with the correct format
-                formatted_prompt = f"""You are a pharmacy inhaler formulary specialist who matches respiratory medications to insurance formulary preferences. 
-
-Here is some context information from formulary documents:
-{context}
-
-Question: {question}
-
-You MUST present your recommendations in this EXACT format, even if information is limited:
-
-Primary Recommendation:
-Medication: [Name or 'No specific recommendation due to limited information']
-- Form: [Generic/Brand or 'Unknown']
-- Device type: [MDI/DPI/Respimat/etc. or 'Unknown']
-- Strength: [Available doses or 'Unknown']
-- Tier: [Formulary tier or 'Unknown']
-- Requirements: [PA/Step therapy/None or 'Unknown']
-- Quantity limit: [Per 30 days or 'Unknown']
-- Estimated copay: [If available or 'Unknown']
-
-Alternative Options:
-1. First Alternative:
-   - Name: [Medication or 'No alternatives identified']
-   - Key difference: [Cost/Device/Coverage or 'Unknown']
-   - Requirements: [Key restrictions or 'Unknown']
-
-2. Second Alternative:
-   - Name: [Medication or 'No additional alternatives identified']
-   - Key difference: [Cost/Device/Coverage or 'Unknown']
-   - Requirements: [Key restrictions or 'Unknown']
-
-Coverage Notes:
-[Include any relevant notes about coverage, prior authorization, step therapy, etc. If no information is available, state 'Limited coverage information available from the provided documents.']
-
-Verification Note:
-[Clearly state whether this answer is from the uploaded documents or external knowledge. If information is incomplete, acknowledge this.]"""
+            # Check if we have table data in the context
+            has_table_data = any('TABLE' in match.get('metadata', {}).get('text', '') 
+                               for match in search_results.get('matches', []))
             
-            try:
-                # Use a more effective prompt structure
-                response = self.openai_client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a pharmacy inhaler formulary specialist who matches respiratory medications to insurance formulary preferences."},
-                        {"role": "user", "content": formatted_prompt}
-                    ],
-                    temperature=0.2,
-                    max_tokens=1000
-                )
-                
-                # Extract the response text
-                response_text = response.choices[0].message.content
-                logger.info("Response generated successfully")
-                
-                return response_text
-            except Exception as e:
-                logger.error(f"Error generating response with GPT-4o: {e}")
-                return f"Error generating response: {str(e)}"
+            if has_table_data:
+                logger.info("Query contains table data - using enhanced table handling")
+            
+            if not context:
+                return "I found some information, but it doesn't appear to be relevant to your query. Please try being more specific."
+            
+            # Generate response using LightRAG or direct API
+            if LIGHTRAG_AVAILABLE:
+                response = self._generate_lightrag_response(augmented_query, context, has_table_data)
+            else:
+                response = self._generate_direct_response(augmented_query, context, has_table_data)
+            
+            return response
         except Exception as e:
             logger.error(f"Error querying pharmacy formulary agent: {e}")
             return f"Error: {str(e)}"
             
-    def get_embedding(self, text):
-        """Get embedding for text using OpenAI's embedding model directly"""
+    def _generate_lightrag_response(self, query, context, has_table_data=False):
+        """Generate response using LightRAG"""
         try:
-            # Use OpenAI's embedding model directly instead of LightRAG's async function
-            response = self.openai_client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=text
-            )
+            # Prepare the prompt template with enhanced table handling if needed
+            if has_table_data:
+                prompt_template = """
+                You are a pharmacy formulary assistant for nurses. Your task is to provide accurate information about medication coverage based on insurance formularies.
+                
+                CONTEXT INFORMATION (INCLUDES TABLE DATA):
+                {context}
+                
+                QUESTION: {query}
+                
+                IMPORTANT: The context includes TABLE DATA from formulary documents. Pay special attention to the tabular information when answering.
+                
+                Please provide a structured response with the following sections:
+                1. Primary Recommendation: The main medication option with form, tier, requirements, and quantity limits
+                2. Alternative Options: 1-2 alternative medications with key differences
+                3. Coverage Notes: Any special requirements, prior authorization criteria, or restrictions
+                
+                Your response should be factual, clear, and based ONLY on the provided context. If you don't know something, say so clearly.
+                """
+            else:
+                prompt_template = """
+                You are a pharmacy formulary assistant for nurses. Your task is to provide accurate information about medication coverage based on insurance formularies.
+                
+                CONTEXT INFORMATION:
+                {context}
+                
+                QUESTION: {query}
+                
+                Please provide a structured response with the following sections:
+                1. Primary Recommendation: The main medication option with form, tier, requirements, and quantity limits
+                2. Alternative Options: 1-2 alternative medications with key differences
+                3. Coverage Notes: Any special requirements, prior authorization criteria, or restrictions
+                
+                Your response should be factual, clear, and based ONLY on the provided context. If you don't know something, say so clearly.
+                """
             
-            # Get the embedding vector
-            embedding = response.data[0].embedding
+            # Format the prompt with query and context
+            prompt = prompt_template.format(query=query, context=context)
             
-            # Resize embedding to match Pinecone index dimension (1024)
-            resized_embedding = self.resize_embedding(embedding, target_dim=1024)
+            # Generate completion using LightRAG
+            response = gpt_4o_complete(prompt)
             
-            return resized_embedding
+            return response
         except Exception as e:
-            logger.error(f"Error getting embedding: {e}")
+            logger.error(f"Error generating LightRAG response: {e}")
+            # Fall back to direct API
+            return self._generate_direct_response(query, context, has_table_data)
+            
+    def _generate_embedding(self, text):
+        """Generate embedding for text using OpenAI"""
+        try:
+            # Preprocess text to handle table formatting
+            text = self._preprocess_text_for_embedding(text)
+            
+            if LIGHTRAG_AVAILABLE:
+                # Use LightRAG's embedding function
+                embedding = openai_embed(text)
+                return embedding
+            else:
+                # Direct API call
+                response = self.openai_client.embeddings.create(
+                    model="text-embedding-ada-002",
+                    input=text
+                )
+                embedding = response.data[0].embedding
+                return embedding
+        except Exception as e:
+            logger.error(f"Error generating embedding: {e}")
             return None
             
-    def resize_embedding(self, embedding, target_dim=1024):
-        """Resize embedding to target dimension using a simple approach"""
+    def _preprocess_text_for_embedding(self, text):
+        """Preprocess text to better handle table data for embeddings"""
+        # Check if text contains markdown table markers
+        if '|' in text and '-|-' in text:
+            # This is likely a markdown table, preserve it
+            return text
+            
+        # Check for TABLE markers from our LlamaParse processor
+        if 'TABLE' in text and text.count('\n') > 5:
+            # This is likely a table from our processor
+            return text
+            
+        # For regular text, we can do some light preprocessing
+        # Remove excessive whitespace
+        text = ' '.join(text.split())
+        
+        return text
+            
+    def _resize_embedding(self, embedding, target_dim=3072):
+        """Resize embedding to target dimension"""
         try:
             # Convert to numpy array
             embedding_array = np.array(embedding)
@@ -285,7 +371,7 @@ Verification Note:
             logger.error(f"Error resizing embedding: {e}")
             return None
     
-    def search_pinecone(self, query_embedding, top_k=10):
+    def _search_pinecone(self, query_embedding, top_k=10):
         """Search Pinecone for relevant documents"""
         try:
             results = self.index.query(
@@ -299,26 +385,165 @@ Verification Note:
             logger.error(f"Error searching Pinecone: {e}")
             return None
     
-    def format_context(self, results):
-        """Format search results into context for the LLM"""
-        if not results or not hasattr(results, 'matches') or not results.matches:
-            return "No relevant information found in the formulary database."
+    def _extract_context(self, search_results, insurance=None):
+        """Extract context from search results with table awareness"""
+        context = ""
         
-        context_parts = []
-        for i, match in enumerate(results.matches, 1):
-            if hasattr(match, 'metadata') and match.metadata:
-                source = match.metadata.get('source', 'Unknown source')
-                insurance = match.metadata.get('insurance', 'Unknown insurance')
-                content_type = match.metadata.get('type', 'Unknown type')
+        # Filter by insurance if provided
+        filtered_matches = []
+        for match in search_results.get('matches', []):
+            metadata = match.get('metadata', {})
+            filename = metadata.get('filename', '')
+            
+            # If insurance filter is provided, only include matches from that insurance
+            if insurance and insurance.lower() not in filename.lower():
+                continue
                 
-                context_parts.append(f"[Document {i}] From {insurance} formulary ({source}):")
-                if hasattr(match, 'metadata') and 'content' in match.metadata:
-                    context_parts.append(match.metadata['content'])
-                else:
-                    context_parts.append("Content not available")
-                context_parts.append("")  # Empty line for separation
+            filtered_matches.append(match)
         
-        return "\n".join(context_parts)
+        # If no matches after filtering, return empty context
+        if not filtered_matches:
+            return ""
+        
+        # Prioritize table data for certain query types
+        table_matches = [m for m in filtered_matches if m.get('metadata', {}).get('has_table', False)]
+        non_table_matches = [m for m in filtered_matches if not m.get('metadata', {}).get('has_table', False)]
+        
+        # If we have both table and non-table matches, prioritize tables but include some non-table context
+        if table_matches and non_table_matches:
+            # Use all table matches and some non-table matches
+            prioritized_matches = table_matches + non_table_matches[:3]
+        else:
+            # Use all matches
+            prioritized_matches = filtered_matches
+        
+        # Extract text from filtered matches
+        for match in prioritized_matches:
+            metadata = match.get('metadata', {})
+            text = metadata.get('text', '')
+            filename = metadata.get('filename', '')
+            has_table = metadata.get('has_table', False)
+            
+                # Add source information with table indicator if relevant
+            table_indicator = " (Contains Table Data)" if has_table else ""
+            context += f"\nSource: {filename}{table_indicator}\n{text}\n"
+        
+        return context
+    
+    def _generate_direct_response(self, query, context, has_table_data=False):
+        """Generate response using direct OpenAI API call"""
+        try:
+            # Prepare the prompt template with enhanced table handling if needed
+            if has_table_data:
+                prompt_template = """
+                You are a pharmacy formulary assistant for nurses. Your task is to provide accurate information about medication coverage based on insurance formularies.
+                
+                CONTEXT INFORMATION (INCLUDES TABLE DATA):
+                {context}
+                
+                QUESTION: {query}
+                
+                IMPORTANT: The context includes TABLE DATA from formulary documents. Pay special attention to the tabular information when answering.
+                
+                Please provide a structured response with the following sections:
+                1. Primary Recommendation: The main medication option with form, tier, requirements, and quantity limits
+                2. Alternative Options: 1-2 alternative medications with key differences
+                3. Coverage Notes: Any special requirements, prior authorization criteria, or restrictions
+                
+                Your response should be factual, clear, and based ONLY on the provided context. If you don't know something, say so clearly.
+                """
+            else:
+                prompt_template = """
+                You are a pharmacy formulary assistant for nurses. Your task is to provide accurate information about medication coverage based on insurance formularies.
+                
+                CONTEXT INFORMATION:
+                {context}
+                
+                QUESTION: {query}
+                
+                Please provide a structured response with the following sections:
+                1. Primary Recommendation: The main medication option with form, tier, requirements, and quantity limits
+                2. Alternative Options: 1-2 alternative medications with key differences
+                3. Coverage Notes: Any special requirements, prior authorization criteria, or restrictions
+                
+                Your response should be factual, clear, and based ONLY on the provided context. If you don't know something, say so clearly.
+                """
+            
+            # Format the prompt with query and context
+            prompt = prompt_template.format(query=query, context=context)
+            
+            # Generate completion using OpenAI
+            if is_countycare_ics_laba:
+                # Use a specialized prompt for CountyCare ICS-LABA queries
+                prompt = f"""Please provide detailed information about CountyCare coverage for ICS-LABA inhalers.
+                Follow the exact structured format for CountyCare ICS-LABA information as specified in your instructions.
+                Make sure to include all the required sections: confirmation, title, primary recommendations, alternative options,
+                coverage notes, and verification.
+                
+                Use the following context from the formulary documents:
+                {context}
+                
+                Question: {query}
+                """
+            
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a pharmacy formulary assistant for nurses. Provide accurate, structured information about medication coverage based on insurance formularies."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=1500
+            )
+            
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error generating direct response: {e}")
+            return "I'm sorry, I encountered an error while generating a response. Please try again."
+    
+    def direct_query(self, query):
+        """Query the agent directly with OpenAI without using RAG"""
+        try:
+            # Check if this is a CountyCare ICS-LABA query
+            is_countycare_ics_laba = False
+            if "countycare" in query.lower() and ("ics-laba" in query.lower() or 
+                                               "ics laba" in query.lower() or
+                                               "inhaled corticosteroid" in query.lower()):
+                is_countycare_ics_laba = True
+                print("Detected CountyCare ICS-LABA query, using structured format")
+            
+            # Use a simple prompt template
+            if is_countycare_ics_laba:
+                # Use a specialized prompt for CountyCare ICS-LABA queries
+                prompt = f"""Please provide detailed information about CountyCare coverage for ICS-LABA inhalers.
+                Follow the exact structured format for CountyCare ICS-LABA information as specified in your instructions.
+                Make sure to include all the required sections: confirmation, title, primary recommendations, alternative options,
+                coverage notes, and verification.
+                
+                Question: {query}
+                """
+            else:
+                prompt = f"""
+                Answer the following question about pharmacy formularies:
+                {query}
+                """
+            
+            # Generate completion using OpenAI
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": self.system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=1500
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            print(f"Error querying agent: {e}")
+            return f"I'm sorry, I encountered an error: {e}"
     
     def get_medication_tier(self, medication_name, insurance_provider=None):
         """Get the tier for a specific medication"""

@@ -1,0 +1,107 @@
+/* 
+ * Pharmacy Formulary Helper Styles
+ * Main stylesheet for the Pharmacy Formulary RAG Agent web interface
+ */
+
+:root {
+  --primary-color: #10A37F;
+  --primary-hover: #1A7F64;
+  --dark-bg: #343541;
+  --darker-bg: #202123;
+  --light-text: #ECECF1;
+  --input-bg: #40414F;
+  --input-border: #565869;
+  --assistant-bubble: #444654;
+}
+
+/* Typography */
+body {
+  font-family: 'Söhne', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--light-text);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Markdown styling */
+.markdown-content h1 {
+  font-size: 1.8rem;
+  margin-top: 1.5rem;
+  color: #ffffff;
+}
+
+.markdown-content h2 {
+  font-size: 1.4rem;
+  margin-top: 1.2rem;
+  color: var(--primary-color);
+}
+
+.markdown-content h3 {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  color: #e6e6e6;
+}
+
+.markdown-content ul {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content strong {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.markdown-content .text-center {
+  text-align: center;
+  font-size: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+/* Emoji styling */
+.emoji {
+  margin-right: 0.5rem;
+}
+
+/* Response formatting */
+.formulary-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.formulary-section h3 {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.medication-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.medication-info .label {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .medication-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .markdown-content .text-center {
+    font-size: 1.2rem;
+  }
+}

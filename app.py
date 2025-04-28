@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 """
-Pharmacy Formulary Web Application
+Pharmacy Formulary RAG Web Application
 ---------------------------------
-A web interface for the Pharmacy Formulary LightRAG Agent.
+A web interface for the Pharmacy Formulary RAG Agent with table-aware extraction
+and structured, nurse-friendly responses.
 """
 
 import os
+import logging
+import time
 from flask import Flask, render_template, request, jsonify
 from pharmacy_lightrag_agent import PharmacyFormularyAgent
 from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -167,13 +177,55 @@ def compare_coverage():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': time.time(),
+        'agent_initialized': agent is not None
+    })
+
+@app.route('/status')
+def status():
+    """Status page with information about the application"""
+    global agent
+    
+    # Initialize agent if not already done
+    if agent is None:
+        try:
+            agent = PharmacyFormularyAgent()
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'error': str(e),
+                'agent_initialized': False
+            })
+    
+    # Get environment information
+    env_info = {
+        'openai_api_key': 'configured' if os.getenv('OPENAI_API_KEY') else 'missing',
+        'pinecone_api_key': 'configured' if os.getenv('PINECONE_API_KEY') else 'missing',
+        'pinecone_environment': os.getenv('PINECONE_ENVIRONMENT', 'not configured'),
+        'llamaparse_api_key': 'configured' if os.getenv('LLAMAPARSE_API_KEY') else 'not configured (optional)'
+    }
+    
+    return jsonify({
+        'status': 'ok',
+        'agent_initialized': True,
+        'environment': env_info,
+        'version': '1.0.0'
+    })
+
 if __name__ == '__main__':
     # Create templates directory if it doesn't exist
     os.makedirs('templates', exist_ok=True)
     
     # Get port from environment variable for Render compatibility
-    # Default to 5002 for local development
-    port = int(os.environ.get("PORT", 5002))
+    # Default to 5006 for local development
+    port = int(os.environ.get("PORT", 5006))
+    
+    logger.info(f"Starting Pharmacy Formulary RAG Agent on port {port}")
     
     # Run the app with host='0.0.0.0' to make it publicly accessible
     app.run(debug=False, port=port, host='0.0.0.0')
