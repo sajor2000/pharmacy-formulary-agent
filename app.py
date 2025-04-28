@@ -64,10 +64,14 @@ def query():
     
     # Process the query
     try:
-        response = agent.query(enhanced_query)
+        logger.info(f"Processing query: '{enhanced_query}' with insurance: {insurance}, medication_class: {medication_class}")
+        response = agent.query(enhanced_query, insurance, medication_class)
+        logger.info("Query processed successfully")
         return jsonify({'response': response})
     except Exception as e:
-        return jsonify({'error': str(e)})
+        error_msg = str(e)
+        logger.error(f"Error processing query: {error_msg}")
+        return jsonify({'error': error_msg})
 
 @app.route('/medication_tier', methods=['POST'])
 def medication_tier():

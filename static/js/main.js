@@ -126,13 +126,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 medication_class: selectedMedicationClass
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            // Check if response is ok before trying to parse JSON
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             // Remove loading indicator
             removeLoadingMessage();
             
             if (data.error) {
-                addSystemMessage(`Error: ${data.error}`);
+                addSystemMessage(`Sorry, there was an error processing your request: ${data.error}`);
             } else {
                 addAssistantMessage(data.response);
             }
@@ -144,7 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Remove loading indicator
             removeLoadingMessage();
             
-            addSystemMessage(`Error: ${error.message}`);
+            console.error('Error during fetch operation:', error);
+            addSystemMessage(`Sorry, there was an error processing your request: ${error.message}`);
             
             // Scroll to bottom
             scrollToBottom();

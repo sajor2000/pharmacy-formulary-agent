@@ -337,21 +337,27 @@ class PharmacyFormularyAgent:
             # Preprocess text to handle table formatting
             text = self._preprocess_text_for_embedding(text)
             
-            if LIGHTRAG_AVAILABLE:
-                # Use LightRAG's embedding function
-                embedding = openai_embed(text)
-                return embedding
-            else:
-                # Direct API call
-                response = self.openai_client.embeddings.create(
-                    model="text-embedding-3-large",
-                    input=text
-                )
-                embedding = response.data[0].embedding
-                return embedding
+            if not text or len(text.strip()) == 0:
+                raise ValueError("Empty text provided for embedding generation")
+                
+            logger.info(f"Generating embedding with model: text-embedding-3-large")
+            
+            # Direct API call - not using LightRAG to ensure reliability
+            response = self.openai_client.embeddings.create(
+                model="text-embedding-3-large",
+                input=text
+            )
+            
+            if not response or not response.data or len(response.data) == 0:
+                raise ValueError("Empty response from OpenAI embedding API")
+                
+            embedding = response.data[0].embedding
+            logger.info(f"Successfully generated embedding with {len(embedding)} dimensions")
+            return embedding
+            
         except Exception as e:
             logger.error(f"Error generating embedding: {e}")
-            return None
+            raise Exception(f"Failed to generate embedding: {str(e)}")
             
     def _preprocess_text_for_embedding(self, text):
         """Preprocess text to better handle table data for embeddings"""
